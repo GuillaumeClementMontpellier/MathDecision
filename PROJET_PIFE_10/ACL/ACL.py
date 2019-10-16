@@ -130,7 +130,7 @@ class Repartition:
     # Prends un set d'eleves, renvoie un tableau de tableaux de tableaux (un tableau de tableaux == une enumeration)
     #
     @staticmethod
-    def repartitions(set_eleves):
+    def toutes_repartitions(set_eleves):
         if len(set_eleves) < 2:
             return []
         else:
@@ -325,7 +325,7 @@ nb_eleves_max = 10
 
 liste_etus = data.get_liste_etus(nb_eleves_max)
 
-reparts = Repartition.repartitions(liste_etus)
+reparts = Repartition.toutes_repartitions(liste_etus)
 
 stat = EnsembleRepartition(reparts, data)
 
@@ -337,10 +337,10 @@ best_reparts = stat.min_pire()
 
 output = best_reparts[0]
 
-for o in output:
-    print(o.repart, "\n", o.avis[0], "\n")
+#for o in output:
+#    print(o.repart, "\n", o.avis[0], "\n")
 
-print(best_reparts[2], data.avis_ret[best_reparts[1]])
+#print(best_reparts[2], data.avis_ret[best_reparts[1]])
 
 # Ecrire dans 'ACL.csv'
 
