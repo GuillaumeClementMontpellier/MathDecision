@@ -29,7 +29,7 @@ nlimit = -1
 ext = ""
 
 # The python executable name it must python or python3
-python_exec = "python3"
+python_exec = "python"
 
 # ==================================================================== #
 
