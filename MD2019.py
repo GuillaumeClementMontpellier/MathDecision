@@ -59,7 +59,6 @@ print("max compute time:", max_compute_time)
 project_folder = "PROJET_PIFE_" + str(report_number)
 
 # Construct the data folder
-data_folder = project_folder + "/DONNEES"
 data_folder = os.path.join(project_folder, "DONNEES")
 
 # Check that the folder exists
@@ -83,7 +82,7 @@ preference_path = data_folder + "/preferences" + ext + ".csv"
 group_path = resultat_folder + "/groupes" + ext + ".csv"
 
 # Group assignment for all groups
-result = { }
+result = {}
 
 # List all the folder in the project folder
 directory_list = os.listdir(project_folder)
@@ -93,25 +92,28 @@ directory_list.remove("RESULTATS")
 _stdout = sys.stdout
 _stderr = sys.stderr
 
-def enablePrint():
+
+def enable_print():
     sys.stdout = _stdout
     sys.stderr = _stderr
 
-def disablePrint():
+
+def disable_print():
     sys.stdout = os.devnull
     sys.stderr = os.devnull
 
+
 # For each group run thir script
 for group_acronym in directory_list:
-    enablePrint()
+    enable_print()
     print(group_acronym + " - DEBUT")
-    disablePrint()
+    disable_print()
 
     group_folder = project_folder + "/" + group_acronym
     prog_path = group_folder + "/" + group_acronym + ".py"
 
     if not os.path.exists(prog_path):
-        enablePrint()
+        enable_print()
         print("Can't load the script at: " + prog_path)
         print(group_acronym + " - ECHEC")
         continue
@@ -129,9 +131,10 @@ for group_acronym in directory_list:
         process = subprocess.Popen(args, stderr=subprocess.PIPE, cwd=group_folder)
     except IOError:
         _, value, traceback = sys.exc_info()
-        enablePrint()
+        enable_print()
         print("NOT A GROUP ERROR !")
-        print("ERROR: Change the 'python_exec' variable (inside the script MD2019) to either 'python' or 'python3' to make this script work")
+        print("ERROR: Change the 'python_exec' variable (inside the script MD2019) "
+              "to either 'python' or 'python3' to make this script work")
         print("NOT A GROUP ERROR !")
         exit()
 
@@ -146,13 +149,13 @@ for group_acronym in directory_list:
     except subprocess.TimeoutExpired:
         # In the case where the script was too long,
         # just kill it and process the next group
-        enablePrint()
+        enable_print()
         process.kill()
         print("Script was too long")
         print(group_acronym + " - ECHEC")
         continue
     except:
-        enablePrint()
+        enable_print()
         process.kill()
         print("Script crashed")
         print(group_acronym + " - ECHEC")
@@ -161,7 +164,7 @@ for group_acronym in directory_list:
     # If stderr is not None then an error occured in
     # print the error and pass to the next script
     if stderr is not None and len(stderr) > 0:
-        enablePrint()
+        enable_print()
         print(stderr.decode("utf-8"))
         print(group_acronym + " - ECHEC")
         continue
@@ -179,17 +182,17 @@ for group_acronym in directory_list:
     try:
         with open(group_csv_path, newline='') as group_file:
             result_reader = csv.reader(group_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            
+
             for row in result_reader:
                 result[group_acronym].append(row)
 
             group_file.close()
 
-            enablePrint()
+            enable_print()
             print("\nGROUP " + group_acronym + " - OK")
     except IOError:
         _, value, traceback = sys.exc_info()
-        enablePrint()
+        enable_print()
         print('Error opening the csv file %s: %s' % (value.filename, value.strerror))
         print(group_acronym + " - ECHEC")
         continue
@@ -204,7 +207,7 @@ with open(resultat_path, mode="w+", newline="") as result_file:
             # Add the group acronym
             assignment = [group_acronym] + assignment
             result_writer.writerow(assignment)
-        
+
         result_writer.writerow("")
 
     result_file.close()
