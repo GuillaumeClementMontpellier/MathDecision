@@ -151,24 +151,11 @@ class Repartition:
 class CSVdata:
     tab = []
 
-    avisMap = {}
+    avis_map = {'TB': 5, 'B': 4, 'AB': 3, 'P': 2, 'I': 1, 'AR': 0}
 
-    avisRet = {}
+    avis_ret = {5: 'TB', 4: 'B', 3: 'AB', 2: 'P', 1: 'I', 0: 'AR'}
 
     def __init__(self):
-        self.avisMap['TB'] = 5
-        self.avisMap['B'] = 4
-        self.avisMap['AB'] = 3
-        self.avisMap['P'] = 2
-        self.avisMap['I'] = 1
-        self.avisMap['AR'] = 0
-
-        self.avisRet[5] = 'TB'
-        self.avisRet[4] = 'B'
-        self.avisRet[3] = 'AB'
-        self.avisRet[2] = 'P'
-        self.avisRet[1] = 'I'
-        self.avisRet[0] = 'AR'
 
         preferences_csv_path = "../DONNEES/preferences" + ext + ".csv"
         try:
@@ -196,11 +183,11 @@ class CSVdata:
                 autres_etu = group.copy()
                 autres_etu.remove(etu)
                 for etu2 in autres_etu:
-                    avis_value.append(self.avisMap[self.get_avis(etu, etu2)])
+                    avis_value.append(self.avis_map[self.get_avis(etu, etu2)])
         avis_value.sort()
         avis_string = []
         for i in avis_value:
-            avis_string.append(self.avisRet[i])
+            avis_string.append(self.avis_ret[i])
         return [avis_string, avis_value]
 
     def get_liste_etus(self, nb_etu):
@@ -210,6 +197,7 @@ class CSVdata:
 class RepartitionStat:
     repart = []
     avis = []
+    nb_avis = []
     rang_med = -1
     pourc_inf = -1
     pourc_sup = -1
@@ -231,6 +219,10 @@ class RepartitionStat:
             nb_sup += 1
         self.pourc_sup = 100 * nb_sup / float(len(self.avis[0]))
 
+        self.nb_avis = [0, 0, 0, 0, 0, 0]
+        for val in self.avis[1]:
+            self.nb_avis[val] += 1
+
     def med_string(self):
         return self.avis[0][self.rang_med]
 
@@ -246,7 +238,6 @@ class RepartitionStat:
 
 class EnsembleRepartition:
     reparts = []
-    signe = -1
 
     def __init__(self, repartitions, data_avis):
         for re in repartitions:
@@ -299,6 +290,34 @@ class EnsembleRepartition:
                     top.append(r)
         return [top, signe]
 
+    def min_pire(self):
+        removed = []
+        top = self.reparts.copy()
+        rep = top.copy()
+        to_remove = 0
+        while rep:
+            top = rep.copy()
+            removed = []
+            for t in top:
+                if t.nb_avis[to_remove] > 0:
+                    rep.remove(t)
+                    removed.append(t)
+            to_remove += 1
+        to_remove -= 1
+        # removed n'est pas vide et contient toutes les répartitions r telles que:
+        #   pour tout n < to_remove, r.nb_avis[n] == 0
+        #   r.nb_avis[to_remove] > 0
+        # On veut alors garder tout ceux qui ont le nb_avis[to_remove] minimum
+        min_nb_avis = removed[0].nb_avis[to_remove]
+        for r in removed:
+            if r.nb_avis[to_remove] < min_nb_avis:
+                min_nb_avis = r.nb_avis[to_remove]
+        top = []
+        for r in removed:
+            if r.nb_avis[to_remove] == min_nb_avis:
+                top.append(r)
+        return [top, to_remove, min_nb_avis]
+
 
 data = CSVdata()
 
@@ -310,9 +329,20 @@ reparts = Repartition.repartitions(liste_etus)
 
 stat = EnsembleRepartition(reparts, data)
 
-# Ecrire dans 'ACL.csv'
+# Donne le tableau de toutes les répartitions au meilleur score selon le systeme d'election (et leurs stats)
+# Pas le bon objectif
+# output = stat.max_score()[0]
 
-output = stat.max_score()[0]
+best_reparts = stat.min_pire()
+
+output = best_reparts[0]
+
+for o in output:
+    print(o.repart, "\n", o.avis[0], "\n")
+
+print(best_reparts[2], data.avis_ret[best_reparts[1]])
+
+# Ecrire dans 'ACL.csv'
 
 resultat_path = "ACL.csv"
 
