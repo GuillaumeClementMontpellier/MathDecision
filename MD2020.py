@@ -6,10 +6,10 @@
     :version: 1.0.0
 """
 
-import os
-import sys
 import csv
+import os
 import subprocess
+import sys
 
 # ==================================================================== #
 

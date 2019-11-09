@@ -467,7 +467,7 @@ def calculate_best(preferences, how, group_name, nb_max_enum):
         # Pas le bon objectif : best_reparts = stat.max_score()
         best_reparts = stat.min_pire()
     else:  # si arg est réél
-        # TODO : Changer methode a graphe !!
+        # TODO : Changer methode à graphe !!
         stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
         best_reparts = stat.min_pire()
     if nb_max_enum != -1:
