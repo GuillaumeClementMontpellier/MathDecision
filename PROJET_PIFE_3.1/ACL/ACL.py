@@ -9,22 +9,6 @@
 import csv
 import sys
 
-EXT = ""
-
-NLIMIT = -1
-
-ARGUMENT = "reel"
-
-GROUP = "ACL"
-
-for arg0 in sys.argv:
-    if arg0.find("--arg=") != -1:
-        ARGUMENT = arg0[6:]
-    elif arg0.find("--ext=") != -1:
-        EXT = arg0[6:]
-    elif arg0.find("--number=") != -1:
-        NLIMIT = int(arg0[9:])
-
 
 class Repartition:
     """Util classe pour calculer toutes les repartitions et/ou les compter."""
@@ -232,6 +216,7 @@ class EtuPreferences:
         :param extension: extension du fichier csv des preferences
         :type extension: str
         """
+        # Read from the csv
         preferences_csv_path = "../DONNEES/preferences" + extension + ".csv"
         try:
             with open(preferences_csv_path, newline='') as pref_file:
@@ -244,7 +229,7 @@ class EtuPreferences:
             pref_file.close()
             print("IOERROR lors de la lecture du CSV")
             sys.exit(1)
-
+        # Crée table de correspondance entre etu et position
         for i in range(1, len(self.tab[0])):
             self.etu_map[self.tab[0][i]] = i
 
@@ -445,67 +430,50 @@ class EnsembleRepartition:
         return [top, signe]
 
     def min_pire(self):
-        """Donne les repartitions avec le moins de pires votes
+        """Donne les repartitions avec le moins de mauvais votes (meuilleurs)
+
+        Par exemple, [TB, TB, AB] > [B, B, AB] > [B, B, AB, AB] > [TB, TB, P]
 
         :return: ensemble de RepartitionStat
         :rtype: [RepartitionStat]
         """
-        removed = []
-        top = self.reparts.copy()
-        rep = top.copy()
-        to_remove = 0
-        # TODO: changer pour que [TB, TB, AB] > [B, B, AB]
-        while rep:
-            top = rep.copy()
-            removed = []
-            for choice in top:
-                if choice.nb_avis[to_remove] > 0:
-                    rep.remove(choice)
-                    removed.append(choice)
+        reparts = self.reparts
+        to_remove = -1
+        while to_remove < 5:  # 5 represente TB
             to_remove += 1
-        to_remove -= 1
-        # removed n'est pas vide et contient toutes les répartitions r telles que:
-        #   pour tout n < to_remove, r.nb_avis[n] == 0
-        #   r.nb_avis[to_remove] > 0
-        # On veut alors garder tout ceux qui ont le nb_avis[to_remove] minimum
-        min_nb_avis = removed[0].nb_avis[to_remove]
-        for choice in removed:
-            if choice.nb_avis[to_remove] < min_nb_avis:
-                min_nb_avis = choice.nb_avis[to_remove]
-        top = []
-        for choice in removed:
-            if choice.nb_avis[to_remove] == min_nb_avis:
-                top.append(choice)
-        return [top, to_remove, min_nb_avis]
+            min_to_remove = reparts[0].nb_avis[to_remove]
+            top = []
+            for choice in reparts:
+                if choice.nb_avis[to_remove] < min_to_remove:
+                    min_to_remove = choice.nb_avis[to_remove]
+                    top = [choice]
+                elif choice.nb_avis[to_remove] == min_to_remove:
+                    top.append(choice)
+            reparts = top
+        # Important : reparts ne sera jamais vide !!
+        return [reparts]
 
 
 def calculate_best(preferences, how, group_name, nb_max_enum):
     """Calcule les meilleures repartitions (et les limite si besoin)"""
     nb_eleves_max = 10
     liste_etus = preferences.get_liste_etus(nb_eleves_max)
-
     if how == "exhaustif":
         # Operation la plus chère
         stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
 
         # Donne le tableau de toutes les répartitions au
         # meilleur score selon le systeme d'election (et leurs stats)
-        # Pas le bon objectif
-        # best_reparts = stat.max_score()
-
+        # Pas le bon objectif : best_reparts = stat.max_score()
         best_reparts = stat.min_pire()
-    else:
-        # si arg est réél
-        # TODO : Changer methode
-
+    else:  # si arg est réél
+        # TODO : Changer methode a graphe !!
         stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
         best_reparts = stat.min_pire()
-
     if nb_max_enum != -1:
         if nb_max_enum < len(best_reparts):
             best_reparts = best_reparts[:nb_max_enum]
             best_reparts.append(group_name + ", encore d'autres")
-
     return best_reparts
 
 
@@ -516,30 +484,53 @@ def write_to_csv(reparts, group_name):
     for best in reparts[0]:
         formatted = Repartition.format(best.repart)
         result.append(formatted)
-
     # Ecrire dans 'ACL.csv'
     resultat_path = group_name + ".csv"
     with open(resultat_path, mode="w+", newline="") as result_file:
         result_writer = csv.writer(result_file, delimiter=';', quotechar='"',
                                    quoting=csv.QUOTE_MINIMAL)
-
         for solution in result:
             result_writer.writerow([solution])
-
     result_file.close()
 
+# =========================================================
+# ================== Execution du script ==================
+# =========================================================
 
-# Execution du script :
+
+# ================== Parse les arguments ==================
 
 
-# Extraction des données
+EXT = "IG4MD"
+
+NLIMIT = -1
+
+ARGUMENT = "reel"
+
+GROUP = "ACL"
+
+for arg0 in sys.argv:
+    if arg0.find("--arg=") != -1:
+        ARGUMENT = arg0[6:]
+    elif arg0.find("--ext=") != -1:
+        EXT = arg0[6:]
+    elif arg0.find("--number=") != -1:
+        NLIMIT = int(arg0[9:])
+
+
+# ================== Extraction données ===================
+
 
 DATA = EtuPreferences(EXT)
 
-# Algo
+
+# ====================== Algorithme =======================
+
 
 OUTPUT = calculate_best(DATA, ARGUMENT, GROUP, NLIMIT)
 
-# Output
+
+# ======================== Output =========================
+
 
 write_to_csv(OUTPUT, GROUP)
