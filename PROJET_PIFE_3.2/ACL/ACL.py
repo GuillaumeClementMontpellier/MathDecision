@@ -196,8 +196,11 @@ class Repartition:
         :return: string formatte
         :rtype: str
         """
-        form = str(repart).replace("', '", " ").replace("'], ['", ",")
-        return form.replace("[", "").replace("]", "").replace("'", "")
+        form = []
+        symbol = " "
+        for group in repart:
+            form.append(symbol.join(group))
+        return form
 
 
 class EtuPreferences:
@@ -490,7 +493,8 @@ def write_to_csv(reparts, group_name):
         result_writer = csv.writer(result_file, delimiter=';', quotechar='"',
                                    quoting=csv.QUOTE_MINIMAL)
         for solution in result:
-            result_writer.writerow([solution])
+            result_writer.writerow(solution)
+
     result_file.close()
 
 # =========================================================
