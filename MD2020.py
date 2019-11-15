@@ -13,8 +13,11 @@ import sys
 
 # ==================================================================== #
 
-# The report number beeing processed
-report_number = 3.1
+# The report number being processed
+report_number = 3.2
+
+# The report number previously processed
+previous_report_number = 3.1
 
 # The maximum time a group can take to run their script, in seconds
 # -1 => infini
@@ -32,6 +35,8 @@ ext = ""
 python_exec = "python"
 
 # ==================================================================== #
+
+result_list = []
 
 for arg in sys.argv:
     # Remove the "-" to just keep what is behind
