@@ -442,7 +442,7 @@ class EnsembleRepartition:
         """
         reparts = self.reparts
         to_remove = -1
-        while to_remove < 4:  # 5 represente TB
+        while to_remove < 4:  # 5 represente TB, on ne veut pas enlever les TB
             to_remove += 1
             min_to_remove = reparts[0].nb_avis[to_remove]
             top = []
