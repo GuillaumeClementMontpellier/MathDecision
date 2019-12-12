@@ -310,7 +310,7 @@ class Repartition:
                 set_temp2 = set_temp.copy()
                 set_temp2.remove(eleve2)
                 for eleve3 in set_temp2:
-                    if eleve2 < eleve3:  # Ordre lexicographique de etu 2 et etu 3 pour être sur pas de repetitions
+                    if eleve2 < eleve3:  # Ordre lexico de etu 2 et etu 3 : pas de repetitions
                         set_temp3 = set_temp2.copy()
                         set_temp3.remove(eleve3)
                         config_temp = [config[0], config[1] - 1]
