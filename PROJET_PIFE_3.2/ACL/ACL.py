@@ -8,13 +8,14 @@
 
 import csv
 import sys
+from collections import namedtuple
 
 
 class Repartition:
-    """Util classe pour calculer toutes les repartitions et/ou les compter."""
+    """Module pour calculer toutes les repartitions et/ou les compter."""
 
     @staticmethod
-    def nombres_possibles_groupes(nb_eleves):
+    def nb_groupes_range(nb_eleves):
         """Return the number of possible groups (min and max) for nb_eleves person.
 
         :param nb_eleves: nombre d'eleves
@@ -27,17 +28,17 @@ class Repartition:
         if nb_eleves % 6 == 0:
             return [nb_eleves / 2, nb_eleves / 3]
         if nb_eleves % 2 != 0:
-            tmp = Repartition.nombres_possibles_groupes(nb_eleves - 3)
-            tmp[1] = tmp[1] + 1
-            tmp[0] = tmp[0] + 1
+            tmp = Repartition.nb_groupes_range(nb_eleves - 3)
+            tmp[0] += 1
+            tmp[1] += 1
             return tmp
-        tmp = Repartition.nombres_possibles_groupes(nb_eleves - 2)
-        tmp[1] = tmp[1] + 1
-        tmp[0] = tmp[0] + 1
+        tmp = Repartition.nb_groupes_range(nb_eleves - 2)
+        tmp[0] += 1
+        tmp[1] += 1
         return tmp
 
     @staticmethod
-    def repartition_nombre_groupes(nb_etu, nb_groupes):
+    def config_min(nb_etu, nb_groupes):
         """Donne une configuration de groupe.
 
         nb_groupes doit etre entre le minimum et le maximum de nombres_possibles_groupes(nb_etu_max)
@@ -56,7 +57,7 @@ class Repartition:
                 rep[0] = rep[0] - 3
                 rep[1] = rep[1] + 2
             return rep
-        tmp = Repartition.repartition_nombre_groupes(nb_etu - 3, nb_groupes - 1)
+        tmp = Repartition.config_min(nb_etu - 3, nb_groupes - 1)
         tmp[1] = tmp[1] + 1
         return tmp
 
@@ -79,17 +80,15 @@ class Repartition:
         if nbr_grps_2 <= 0 and nbr_grps_3 <= 1:
             return 1
         nb_etu = (nbr_grps_2 * 2 + nbr_grps_3 * 3)
-        if nbr_grps_2 > 0 and nbr_grps_3 > 0:
+        small = 0
+        big = 0
+        if nbr_grps_2 > 0:
             small = Repartition.compter_repartitions_config(nbr_grps_2 - 1, nbr_grps_3)
             small *= (nb_etu - 1)
+        if nbr_grps_3 > 0:
             big = Repartition.compter_repartitions_config(nbr_grps_2, nbr_grps_3 - 1)
             big *= (nb_etu - 1) * (nb_etu - 2) / 2
-            return small + big
-        if nbr_grps_2 > 0:
-            repart_inter = Repartition.compter_repartitions_config(nbr_grps_2 - 1, nbr_grps_3)
-            return (nb_etu - 1) * repart_inter
-        repart_inter = Repartition.compter_repartitions_config(nbr_grps_2, nbr_grps_3 - 1)
-        return ((nb_etu - 1) * (nb_etu - 2) / 2) * repart_inter
+        return small + big
 
     @staticmethod
     def compter_repartitions(nb_etu):
@@ -102,18 +101,16 @@ class Repartition:
         :return: nombre de repartitions de nbr_etu eleves
         :rtype: int
         """
-        nbr_grps_possibles = Repartition.nombres_possibles_groupes(nb_etu)
-        nbr_grps_max = nbr_grps_possibles[0]
-        nbr_grps_min = nbr_grps_possibles[1]
-        repartition_tmp = Repartition.repartition_nombre_groupes(nb_etu, nbr_grps_max)
-        nbr_grps = repartition_tmp[0] + repartition_tmp[1]
+        nbr_grps_range = Repartition.nb_groupes_range(nb_etu)
+        nbr_grps_max = nbr_grps_range[0]
+        nbr_grps_min = nbr_grps_range[1]
+        configuration = Repartition.config_min(nb_etu, nbr_grps_max)
         somme = 0
-        while nbr_grps >= nbr_grps_min:
-            inc = Repartition.compter_repartitions_config(repartition_tmp[0], repartition_tmp[1])
+        while configuration[0] + configuration[1] >= nbr_grps_min:
+            inc = Repartition.compter_repartitions_config(configuration[0], configuration[1])
             somme = somme + inc
-            repartition_tmp[0] = repartition_tmp[0] - 3
-            repartition_tmp[1] = repartition_tmp[1] + 2
-            nbr_grps = repartition_tmp[0] + repartition_tmp[1]
+            configuration[0] -= 3
+            configuration[1] += 2
         return somme
 
     @staticmethod
@@ -162,7 +159,7 @@ class Repartition:
         return ret
 
     @staticmethod
-    def toutes_repartitions(set_eleves):
+    def all_repartitions(set_eleves):
         """Donne les repartitions possibles des set_eleves.
 
         .. seealso:: repartitions_config
@@ -174,40 +171,20 @@ class Repartition:
         """
         if len(set_eleves) < 2:
             return []
-        nbr_grps_possibles = Repartition.nombres_possibles_groupes(len(set_eleves))
-        nbr_grps_max = nbr_grps_possibles[0]
-        nbr_grps_min = nbr_grps_possibles[1]
-        repartitions = Repartition.repartition_nombre_groupes(len(set_eleves), nbr_grps_max)
-        nbr_grps = repartitions[0] + repartitions[1]
-        ret = []
-        while nbr_grps >= nbr_grps_min:
-            ret.extend(Repartition.repartitions_config(set_eleves, repartitions))
-            repartitions[0] = repartitions[0] - 3
-            repartitions[1] = repartitions[1] + 2
-            nbr_grps = repartitions[0] + repartitions[1]
-        return ret
-
-    @staticmethod
-    def format(repart):
-        """Formatte une repartition en cvs string.
-
-        :param repart: une repartition d'etudiants
-        :type repart: [[str]]
-        :return: string formatte
-        :rtype: str
-        """
-        form = []
-        symbol = " "
-        for group in repart:
-            form.append(symbol.join(group))
-        return form
+        nbr_grps_range = Repartition.nb_groupes_range(len(set_eleves))
+        nbr_grps_max = nbr_grps_range[0]
+        nbr_grps_min = nbr_grps_range[1]
+        configuration = Repartition.config_min(len(set_eleves), nbr_grps_max)
+        repartitions = []
+        while configuration[0] + configuration[1] >= nbr_grps_min:
+            repartitions.extend(Repartition.repartitions_config(set_eleves, configuration))
+            configuration[0] -= 3
+            configuration[1] += 2
+        return repartitions
 
 
 class EtuPreferences:
     """Classe wrapper autour des données du csv à lire (pour les avis des étudiants)."""
-    tab = []
-
-    etu_map = {}
 
     avis_map = {'TB': 5, 'B': 4, 'AB': 3, 'P': 2, 'I': 1, 'AR': 0}
 
@@ -219,19 +196,16 @@ class EtuPreferences:
         :param extension: extension du fichier csv des preferences
         :type extension: str
         """
-        # Read from the csv
+        self.tab = []
+        self.etu_map = {}
+
         preferences_csv_path = "../DONNEES/preferences" + extension + ".csv"
-        try:
-            with open(preferences_csv_path, newline='') as pref_file:
-                result_reader = csv.reader(pref_file, delimiter=',', quotechar='"',
-                                           quoting=csv.QUOTE_MINIMAL)
-                for row in result_reader:
-                    self.tab.append(row)
-                pref_file.close()
-        except IOError:
-            pref_file.close()
-            print("IOERROR lors de la lecture du CSV")
-            sys.exit(1)
+        with open(preferences_csv_path, newline='') as pref_file:
+            result_reader = csv.reader(pref_file, delimiter=',', quotechar='"',
+                                       quoting=csv.QUOTE_MINIMAL)
+            for row in result_reader:
+                self.tab.append(row)
+
         # Crée table de correspondance entre etu et position
         for i in range(1, len(self.tab[0])):
             self.etu_map[self.tab[0][i]] = i
@@ -289,7 +263,7 @@ class EtuPreferences:
             avis_string.append(self.avis_ret[i])
         return [avis_string, avis_value]
 
-    def get_liste_etus(self, nb_etu_max):
+    def get_liste_etus(self, nb_etu_max=0):
         """Donne la liste des etudiants des données.
 
         :param nb_etu_max: nombre max d'etudiants
@@ -302,159 +276,197 @@ class EtuPreferences:
         return self.tab[0][1:1 + nb_etu_max]
 
 
-class RepartitionStat:
-    """Classe comprenant une répartition et des infos à son sujet (avis, médiane, ...)."""
+def repartition_smart(repart, data_promo):
+    """Analyse la repartition selon la promo.
 
-    repart = []
-    avis = []
-    nb_avis = []
-    rang_med = -1
-    pourc_inf = -1
-    pourc_sup = -1
-
-    def __init__(self, repart, data_promo):
-        """Analyse les stats selon la promo.
-
-        :param repart: une repartition a analyser
-        :type repart: [[str]]
-        :param data_promo: un ensemble de references
-        :type data_promo: EtuPreferences
-        """
-
-        self.repart = repart
-        self.avis = data_promo.get_avis_repartition(self.repart)
-        self.rang_med = int(len(self.avis[0]) / 2)
-        med_num = self.avis[1][self.rang_med]
-
-        nb_inf = 0
-        while nb_inf < len(self.avis[0]) and self.avis[1][nb_inf] < med_num:
-            nb_inf += 1
-        self.pourc_inf = 100 * nb_inf / float(len(self.avis[0]))
-
-        nb_sup = 0
-        while nb_sup < len(self.avis[0]) and self.avis[1][len(self.avis[0]) - nb_sup - 1] > med_num:
-            nb_sup += 1
-        self.pourc_sup = 100 * nb_sup / float(len(self.avis[0]))
-
-        self.nb_avis = [0, 0, 0, 0, 0, 0]
-        for val in self.avis[1]:
-            self.nb_avis[val] += 1
-
-    def med_string(self):
-        """Donne la mediane sous forme de str."""
-        return self.avis[0][self.rang_med]
-
-    def med_val(self):
-        """Donne la mediane sous forme de int."""
-        return self.avis[1][self.rang_med]
-
-    def signe(self):
-        """Donne le signe selon le systeme de vote."""
-        if self.pourc_inf > self.pourc_sup:
-            return -1
-        return 1
+    :param repart: une repartition a analyser
+    :type repart: [[str]]
+    :param data_promo: un ensemble de references
+    :type data_promo: EtuPreferences
+    """
+    smart = namedtuple("SmartRepartition", ("repart", "avis", "nb_avis"))
+    smart.repart = repart
+    smart.avis = data_promo.get_avis_repartition(repart)
+    smart.nb_avis = [0, 0, 0, 0, 0, 0]
+    for val in smart.avis[1]:
+        smart.nb_avis[val] += 1
+    return smart
 
 
-class EnsembleRepartition:
-    """Aggregat de RepartitionStat, qui peut donc calculer le meilleur selon l'objectif."""
+# class SmartRepartition:
+#     """Classe comprenant une répartition et des infos à son sujet (avis, médiane, ...)."""
+#
+#     def __init__(self, repart, data_promo):
+#         """Analyse les stats selon la promo.
+#
+#         :param repart: une repartition a analyser
+#         :type repart: [[str]]
+#         :param data_promo: un ensemble de references
+#         :type data_promo: EtuPreferences
+#         """
+#
+#         self.repart = repart
+#         self.avis = data_promo.get_avis_repartition(self.repart)
+#
+#         self.nb_avis = [0, 0, 0, 0, 0, 0]
+#         for val in self.avis[1]:
+#             self.nb_avis[val] += 1
+#
+#
+# self.rang_med = int(len(self.avis[0]) / 2)
+# med_num = self.avis[1][self.rang_med]
+
+# nb_inf = 0
+# while nb_inf < len(self.avis[0]) and self.avis[1][nb_inf] < med_num:
+#     nb_inf += 1
+# self.pourc_inf = 100 * nb_inf / float(len(self.avis[0]))
+#
+# nb_sup = 0
+# while nb_sup < len(self.avis[0]) and self.avis[1][len(self.avis[0]) - nb_sup - 1] > med_num:
+#     nb_sup += 1
+# self.pourc_sup = 100 * nb_sup / float(len(self.avis[0]))
+#
+# def med_string(self):
+#     """Donne la mediane sous forme de str."""
+#     return self.avis[0][self.rang_med]
+#
+# def med_val(self):
+#     """Donne la mediane sous forme de int."""
+#     return self.avis[1][self.rang_med]
+#
+# def signe(self):
+#     """Donne le signe selon le systeme de vote."""
+#     if self.pourc_inf > self.pourc_sup:
+#         return -1
+#     return 1
+#
+#
+# class EnsembleRepartition:
+#     """Aggregat de RepartitionStat, qui peut donc calculer le meilleur selon l'objectif."""
+#
+#     def __init__(self, repartitions, data_avis):
+#         """Analyse un ensemble de repartition.
+#
+#         :param repartitions: ensemble de repartition
+#         :type repartitions: [[[str]]]
+#         :param data_avis: avis de la promo
+#         :type data_avis: EtuPreferences
+#         """
+#         self.reparts = []
+#         for choice in repartitions:
+#             self.reparts.append(RepartitionStat(choice, data_avis))
+#
+#     def min_pire(self):
+#         """Donne les repartitions avec le moins de mauvais votes (meuilleurs)
+#
+#         Par exemple, [TB, TB, AB] > [B, B, AB] > [B, B, AB, AB] > [TB, TB, P]
+#
+#         :return: ensemble de RepartitionStat
+#         :rtype: [RepartitionStat]
+#         """
+#         reparts = self.reparts
+#         to_remove = -1
+#         while to_remove < 4:  # 5 represente TB, on ne veut pas enlever les TB
+#             to_remove += 1
+#             min_to_remove = reparts[0].nb_avis[to_remove]
+#             top = []
+#             for choice in reparts:
+#                 if choice.nb_avis[to_remove] < min_to_remove:
+#                     min_to_remove = choice.nb_avis[to_remove]
+#                     top = [choice]
+#                 elif choice.nb_avis[to_remove] == min_to_remove:
+#                     top.append(choice)
+#             reparts = top
+#         # Important : reparts ne sera jamais vide !!
+#         return [reparts]
+#
+# def max_med(self):
+#     """Donne les repartitions avec les meilleures medianes
+#
+#     :return: ensemble de RepartitionStat
+#     :rtype: [RepartitionStat]
+#     """
+#     max_med = -1
+#     top = []
+#     for choice in self.reparts:
+#         if choice.med_val() > max_med:
+#             top = []
+#             max_med = choice.med_val()
+#             top.append(choice)
+#         elif choice.med_val() == max_med:
+#             top.append(choice)
+#     return top
+#
+# def max_signe(self):
+#     """Donne les repartitions avec les meilleures medianes et signe
+#
+#     :return: ensemble de RepartitionStat
+#     :rtype: [RepartitionStat]
+#     """
+#     repart_max = self.max_med()
+#     signe = -1
+#     top = []
+#     for choice in repart_max:
+#         if choice.signe() == 1:  # Si on a plus de mention strict sup a la mediane
+#             if signe == -1:
+#                 signe = 1
+#                 top = []
+#             top.append(choice)
+#         elif signe == -1:
+#             top.append(choice)
+#     return [top, signe]
+#
+# def max_score(self):
+#     """Donne les repartitions avec les meilleures scores
+#
+#     :return: ensemble de RepartitionStat
+#     :rtype: [RepartitionStat]
+#     """
+#     [repart_max, signe] = self.max_signe()
+#     top = []
+#     if signe == -1:  # cas mediane est un moins
+#         min_inf = repart_max[0].pourc_inf
+#         for choice in repart_max:
+#             if choice.pourc_inf < min_inf:
+#                 top = [choice]
+#                 min_inf = choice.pourc_inf
+#             elif choice.pourc_inf == min_inf:
+#                 top.append(choice)
+#     else:  # cas mediane est un plus
+#         max_sup = repart_max[0].pourc_sup
+#         for choice in repart_max:
+#             if choice.pourc_sup > max_sup:
+#                 top = [choice]
+#                 max_sup = choice.pourc_sup
+#             elif choice.pourc_sup == max_sup:
+#                 top.append(choice)
+#     return [top, signe]
+
+def get_best_exhaustive(repartitions, data_avis):
+    """Donne les repartitions avec le moins de mauvais votes (meuilleurs)
+
+    Par exemple, [TB, TB, AB] > [B, B, AB] > [B, B, AB, AB] > [TB, TB, P]
+
+    :return: ensemble de RepartitionStat
+    :rtype: [RepartitionStat]
+    """
     reparts = []
-
-    def __init__(self, repartitions, data_avis):
-        """Analyse un ensemble de repartition.
-
-        :param repartitions: ensemble de repartition
-        :type repartitions: [[[str]]]
-        :param data_avis: avis de la promo
-        :type data_avis: EtuPreferences
-        """
-        for choice in repartitions:
-            self.reparts.append(RepartitionStat(choice, data_avis))
-
-    def max_med(self):
-        """Donne les repartitions avec les meilleures medianes
-
-        :return: ensemble de RepartitionStat
-        :rtype: [RepartitionStat]
-        """
-        max_med = -1
+    for choice in repartitions:
+        reparts.append(repartition_smart(choice, data_avis))
+    to_remove = -1
+    while to_remove < 4:  # 5 represente TB, on ne veut pas enlever les TB
+        to_remove += 1
+        min_to_remove = reparts[0].nb_avis[to_remove]
         top = []
-        for choice in self.reparts:
-            if choice.med_val() > max_med:
-                top = []
-                max_med = choice.med_val()
+        for choice in reparts:
+            if choice.nb_avis[to_remove] < min_to_remove:
+                min_to_remove = choice.nb_avis[to_remove]
+                top = [choice]
+            elif choice.nb_avis[to_remove] == min_to_remove:
                 top.append(choice)
-            elif choice.med_val() == max_med:
-                top.append(choice)
-        return top
-
-    def max_signe(self):
-        """Donne les repartitions avec les meilleures medianes et signe
-
-        :return: ensemble de RepartitionStat
-        :rtype: [RepartitionStat]
-        """
-        repart_max = self.max_med()
-        signe = -1
-        top = []
-        for choice in repart_max:
-            if choice.signe() == 1:  # Si on a plus de mention strict sup a la mediane
-                if signe == -1:
-                    signe = 1
-                    top = []
-                top.append(choice)
-            elif signe == -1:
-                top.append(choice)
-        return [top, signe]
-
-    def max_score(self):
-        """Donne les repartitions avec les meilleures scores
-
-        :return: ensemble de RepartitionStat
-        :rtype: [RepartitionStat]
-        """
-        [repart_max, signe] = self.max_signe()
-        top = []
-        if signe == -1:  # cas mediane est un moins
-            min_inf = repart_max[0].pourc_inf
-            for choice in repart_max:
-                if choice.pourc_inf < min_inf:
-                    top = [choice]
-                    min_inf = choice.pourc_inf
-                elif choice.pourc_inf == min_inf:
-                    top.append(choice)
-        else:  # cas mediane est un plus
-            max_sup = repart_max[0].pourc_sup
-            for choice in repart_max:
-                if choice.pourc_sup > max_sup:
-                    top = [choice]
-                    max_sup = choice.pourc_sup
-                elif choice.pourc_sup == max_sup:
-                    top.append(choice)
-        return [top, signe]
-
-    def min_pire(self):
-        """Donne les repartitions avec le moins de mauvais votes (meuilleurs)
-
-        Par exemple, [TB, TB, AB] > [B, B, AB] > [B, B, AB, AB] > [TB, TB, P]
-
-        :return: ensemble de RepartitionStat
-        :rtype: [RepartitionStat]
-        """
-        reparts = self.reparts
-        to_remove = -1
-        while to_remove < 4:  # 5 represente TB, on ne veut pas enlever les TB
-            to_remove += 1
-            min_to_remove = reparts[0].nb_avis[to_remove]
-            top = []
-            for choice in reparts:
-                if choice.nb_avis[to_remove] < min_to_remove:
-                    min_to_remove = choice.nb_avis[to_remove]
-                    top = [choice]
-                elif choice.nb_avis[to_remove] == min_to_remove:
-                    top.append(choice)
-            reparts = top
-        # Important : reparts ne sera jamais vide !!
-        return [reparts]
+        reparts = top
+    # Important : reparts ne sera jamais vide !!
+    return reparts
 
 
 def calculate_best(preferences, how, group_name, nb_max_enum):
@@ -462,17 +474,16 @@ def calculate_best(preferences, how, group_name, nb_max_enum):
     nb_eleves_max = 10
     liste_etus = preferences.get_liste_etus(nb_eleves_max)
     if how == "exhaustif":
-        # Operation la plus chère
-        stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
-
-        # Donne le tableau de toutes les répartitions au
-        # meilleur score selon le systeme d'election (et leurs stats)
-        # Pas le bon objectif : best_reparts = stat.max_score()
-        best_reparts = stat.min_pire()
+        # # Operation la plus chère
+        # stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
+        #
+        # # Donne le tableau de toutes les répartitions au
+        # # meilleur score selon le systeme d'election (et leurs stats)
+        # best_reparts = stat.min_pire()
+        best_reparts = get_best_exhaustive(Repartition.all_repartitions(liste_etus), preferences)
     else:  # si arg est réél
-        # TODO : Changer methode à graphe !!
-        stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
-        best_reparts = stat.min_pire()
+        # TODO : Changer methode !!
+        best_reparts = get_best_exhaustive(Repartition.all_repartitions(liste_etus), preferences)
     if nb_max_enum != -1:
         if nb_max_enum < len(best_reparts):
             best_reparts = best_reparts[:nb_max_enum]
@@ -483,19 +494,16 @@ def calculate_best(preferences, how, group_name, nb_max_enum):
 def write_to_csv(reparts, group_name):
     """Ecrit les repartitions dans un fichier csv."""
     # formatte les repartitions
-    result = []
-    for best in reparts[0]:
-        formatted = Repartition.format(best.repart)
-        result.append(formatted)
+    result = map(lambda best: map(" ".join, best.repart), reparts)
+
     # Ecrire dans 'ACL.csv'
     resultat_path = group_name + ".csv"
-    with open(resultat_path, mode="w+", newline="") as result_file:
-        result_writer = csv.writer(result_file, delimiter=';', quotechar='"',
+    with open(resultat_path, mode="w+", newline="") as file:
+        result_writer = csv.writer(file, delimiter=';', quotechar='"',
                                    quoting=csv.QUOTE_MINIMAL)
         for solution in result:
             result_writer.writerow(solution)
 
-    result_file.close()
 
 # =========================================================
 # ================== Execution du script ==================
@@ -521,18 +529,15 @@ for arg0 in sys.argv:
     elif arg0.find("--number=") != -1:
         NLIMIT = int(arg0[9:])
 
-
 # ================== Extraction données ===================
 
 
 DATA = EtuPreferences(EXT)
 
-
 # ====================== Algorithme =======================
 
 
 OUTPUT = calculate_best(DATA, ARGUMENT, GROUP, NLIMIT)
-
 
 # ======================== Output =========================
 
