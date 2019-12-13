@@ -452,7 +452,8 @@ def get_best_exhaustive(repartitions):
             elif choice.nb_avis[to_remove] == min_to_remove:
                 top.append(choice)
         repartitions = top
-    # Important : reparts ne sera jamais vide !!
+    repartitions.reverse()
+    [choice.repart.reverse() for choice in repartitions]
     return repartitions
 
 
@@ -460,6 +461,8 @@ def calculate_best(preferences, how, group_name, nb_max_enum):
     """Calcule les meilleures repartitions (et les limite si besoin)"""
     nb_eleves_max = 10
     liste_etus = preferences.liste_etus(nb_eleves_max)
+    liste_etus.sort()
+    liste_etus.reverse()
     if how == "exhaustif":
         # # Operation la plus chère
         # stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
