@@ -10,155 +10,6 @@ import csv
 import sys
 
 
-# class SmartRepartition:
-#     """Classe comprenant une répartition et des infos à son sujet (avis, médiane, ...)."""
-#
-#     def __init__(self, repart, data_promo):
-#         """Analyse les stats selon la promo.
-#
-#         :param repart: une repartition a analyser
-#         :type repart: [[str]]
-#         :param data_promo: un ensemble de references
-#         :type data_promo: EtuPreferences
-#         """
-#
-#         self.repart = repart
-#         self.avis = data_promo.get_avis_repartition(self.repart)
-#
-#         self.nb_avis = [0, 0, 0, 0, 0, 0]
-#         for val in self.avis[1]:
-#             self.nb_avis[val] += 1
-#
-#
-# self.rang_med = int(len(self.avis[0]) / 2)
-# med_num = self.avis[1][self.rang_med]
-
-# nb_inf = 0
-# while nb_inf < len(self.avis[0]) and self.avis[1][nb_inf] < med_num:
-#     nb_inf += 1
-# self.pourc_inf = 100 * nb_inf / float(len(self.avis[0]))
-#
-# nb_sup = 0
-# while nb_sup < len(self.avis[0]) and self.avis[1][len(self.avis[0]) - nb_sup - 1] > med_num:
-#     nb_sup += 1
-# self.pourc_sup = 100 * nb_sup / float(len(self.avis[0]))
-#
-# def med_string(self):
-#     """Donne la mediane sous forme de str."""
-#     return self.avis[0][self.rang_med]
-#
-# def med_val(self):
-#     """Donne la mediane sous forme de int."""
-#     return self.avis[1][self.rang_med]
-#
-# def signe(self):
-#     """Donne le signe selon le systeme de vote."""
-#     if self.pourc_inf > self.pourc_sup:
-#         return -1
-#     return 1
-#
-#
-# class EnsembleRepartition:
-#     """Aggregat de RepartitionStat, qui peut donc calculer le meilleur selon l'objectif."""
-#
-#     def __init__(self, repartitions, data_avis):
-#         """Analyse un ensemble de repartition.
-#
-#         :param repartitions: ensemble de repartition
-#         :type repartitions: [[[str]]]
-#         :param data_avis: avis de la promo
-#         :type data_avis: EtuPreferences
-#         """
-#         self.reparts = []
-#         for choice in repartitions:
-#             self.reparts.append(RepartitionStat(choice, data_avis))
-#
-#     def min_pire(self):
-#         """Donne les repartitions avec le moins de mauvais votes (meuilleurs)
-#
-#         Par exemple, [TB, TB, AB] > [B, B, AB] > [B, B, AB, AB] > [TB, TB, P]
-#
-#         :return: ensemble de RepartitionStat
-#         :rtype: [RepartitionStat]
-#         """
-#         reparts = self.reparts
-#         to_remove = -1
-#         while to_remove < 4:  # 5 represente TB, on ne veut pas enlever les TB
-#             to_remove += 1
-#             min_to_remove = reparts[0].nb_avis[to_remove]
-#             top = []
-#             for choice in reparts:
-#                 if choice.nb_avis[to_remove] < min_to_remove:
-#                     min_to_remove = choice.nb_avis[to_remove]
-#                     top = [choice]
-#                 elif choice.nb_avis[to_remove] == min_to_remove:
-#                     top.append(choice)
-#             reparts = top
-#         # Important : reparts ne sera jamais vide !!
-#         return [reparts]
-#
-# def max_med(self):
-#     """Donne les repartitions avec les meilleures medianes
-#
-#     :return: ensemble de RepartitionStat
-#     :rtype: [RepartitionStat]
-#     """
-#     max_med = -1
-#     top = []
-#     for choice in self.reparts:
-#         if choice.med_val() > max_med:
-#             top = []
-#             max_med = choice.med_val()
-#             top.append(choice)
-#         elif choice.med_val() == max_med:
-#             top.append(choice)
-#     return top
-#
-# def max_signe(self):
-#     """Donne les repartitions avec les meilleures medianes et signe
-#
-#     :return: ensemble de RepartitionStat
-#     :rtype: [RepartitionStat]
-#     """
-#     repart_max = self.max_med()
-#     signe = -1
-#     top = []
-#     for choice in repart_max:
-#         if choice.signe() == 1:  # Si on a plus de mention strict sup a la mediane
-#             if signe == -1:
-#                 signe = 1
-#                 top = []
-#             top.append(choice)
-#         elif signe == -1:
-#             top.append(choice)
-#     return [top, signe]
-#
-# def max_score(self):
-#     """Donne les repartitions avec les meilleures scores
-#
-#     :return: ensemble de RepartitionStat
-#     :rtype: [RepartitionStat]
-#     """
-#     [repart_max, signe] = self.max_signe()
-#     top = []
-#     if signe == -1:  # cas mediane est un moins
-#         min_inf = repart_max[0].pourc_inf
-#         for choice in repart_max:
-#             if choice.pourc_inf < min_inf:
-#                 top = [choice]
-#                 min_inf = choice.pourc_inf
-#             elif choice.pourc_inf == min_inf:
-#                 top.append(choice)
-#     else:  # cas mediane est un plus
-#         max_sup = repart_max[0].pourc_sup
-#         for choice in repart_max:
-#             if choice.pourc_sup > max_sup:
-#                 top = [choice]
-#                 max_sup = choice.pourc_sup
-#             elif choice.pourc_sup == max_sup:
-#                 top.append(choice)
-#     return [top, signe]
-
 class Repartition:
     """Module pour calculer toutes les repartitions et/ou les compter."""
 
@@ -175,6 +26,10 @@ class Repartition:
         self.nb_avis = [0, 0, 0, 0, 0, 0]
         for val in self.avis[1]:
             self.nb_avis[val] += 1
+
+    def __iter__(self):
+        for rep in self.repart:
+            yield rep
 
     @staticmethod
     def nb_groupes_range(nb_eleves):
@@ -270,7 +125,7 @@ class Repartition:
         somme = 0
         while configuration[0] + configuration[1] >= nbr_grps_min:
             inc = Repartition.compter_repartitions_config(configuration[0], configuration[1])
-            somme = somme + inc
+            somme += inc
             configuration[0] -= 3
             configuration[1] += 2
         return somme
@@ -419,7 +274,7 @@ class EtuPreferences:
         avis_string = [EtuPreferences.avis_ret[val] for val in avis_value]
         return avis_string, avis_value
 
-    def liste_etus(self, nb_etu_max=0):
+    def liste_etus(self, *, nb_etu_max=-1):
         """Donne la liste des etudiants des données.
 
         :param nb_etu_max: nombre max d'etudiants
@@ -428,7 +283,7 @@ class EtuPreferences:
         :rtype: [str]
         """
         if nb_etu_max < 0:
-            nb_etu_max = 0
+            return self.tab[0][1:]
         return self.tab[0][1:1 + nb_etu_max]
 
 
@@ -457,12 +312,11 @@ def get_best_exhaustive(repartitions):
     return repartitions
 
 
-def calculate_best(preferences, how, group_name, nb_max_enum):
+def calculate_best(preferences, how, *, group_name="", nb_max_enum=-1):
     """Calcule les meilleures repartitions (et les limite si besoin)"""
     nb_eleves_max = 10
-    liste_etus = preferences.liste_etus(nb_eleves_max)
-    liste_etus.sort()
-    liste_etus.reverse()
+    liste_etus = preferences.liste_etus(nb_etu_max=nb_eleves_max)
+    liste_etus.sort(reverse=True)
     if how == "exhaustif":
         # # Operation la plus chère
         # stat = EnsembleRepartition(Repartition.toutes_repartitions(liste_etus), preferences)
@@ -474,24 +328,23 @@ def calculate_best(preferences, how, group_name, nb_max_enum):
     else:  # si arg est réél
         # TODO : Changer methode !!
         best_reparts = get_best_exhaustive(Repartition.all_repartitions(liste_etus, preferences))
-    if nb_max_enum != -1:
-        if nb_max_enum < len(best_reparts):
-            best_reparts = best_reparts[:nb_max_enum]
-            best_reparts.append(group_name + ", encore d'autres")
+    if nb_max_enum != -1 and nb_max_enum < len(best_reparts):
+        best_reparts = best_reparts[:nb_max_enum]
+        best_reparts.append(group_name + ", encore d'autres")
     return best_reparts
 
 
 def write_to_csv(reparts, resultat_path):
     """Ecrit les repartitions dans un fichier csv."""
     # formatte les repartitions
-    result = map(lambda best: map(" ".join, best.repart), reparts)
+    to_write = [[" ".join(group) for group in best] for best in reparts]
 
     # Ecrire dans 'ACL.csv'
     with open(resultat_path, mode="w+", newline="") as file:
         result_writer = csv.writer(file, delimiter=';', quotechar='"',
                                    quoting=csv.QUOTE_MINIMAL)
-        for solution in result:
-            result_writer.writerow(solution)
+
+        [result_writer.writerow(solution) for solution in to_write]
 
 
 # =========================================================
@@ -532,7 +385,7 @@ DATA = EtuPreferences(PATH_CSV)
 # ====================== Algorithme =======================
 
 
-OUTPUT = calculate_best(DATA, ARGUMENT, GROUP, NLIMIT)
+OUTPUT = calculate_best(DATA, ARGUMENT, group_name=GROUP, nb_max_enum=NLIMIT)
 
 # ======================== Output =========================
 
